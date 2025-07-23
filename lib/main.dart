@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:heys_dev_web/router.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-void main() {
+import 'package:heys_dev_web/router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import 'main_load.dart';
+
+void main() async {
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  await mainLoad(widgetsBinding);
   setUrlStrategy(PathUrlStrategy());
-  runApp(const MyApp());
+  runApp(ProviderScope(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {

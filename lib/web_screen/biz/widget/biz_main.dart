@@ -16,7 +16,7 @@ class BizMain extends HookConsumerWidget {
     return Scaffold(
       body: Container(
         child: SizedBox(
-          width: MediaQuery.of(context).size.width / 3,
+          width: MediaQuery.of(context).size.width / 2,
           child: Column(
             children: [
               VisitLogSearch(),
@@ -24,29 +24,33 @@ class BizMain extends HookConsumerWidget {
               VisitLogStateWidget(),
               10.heightBox,
               Expanded(
-                child: ListView.separated(
-                  itemBuilder: (context, index) {
-                    if (state.visitLog == null) return Container();
-                    final item = state.visitLog![index];
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(),
+                  child: ListView.separated(
+                    itemBuilder: (context, index) {
+                      if (state.visitLog == null) return Container();
+                      final item = state.visitLog![index];
 
-                    return VisitLogRowWidget(
-                      id: item["id"],
-                      appName: item["app_name"],
-                      userName: item["user_id"],
-                      osType: item["os_type"],
-                      version: item["version"],
-                      eventType: item["event_type"],
-                      contry: item["contry"],
-                      createAt: DateTime.parse(item["created_at"]),
-                    );
-                  },
-                  separatorBuilder: (context, index) {
-                    return const Divider(
-                      height: 1,
-                      color: Colors.black,
-                    );
-                  },
-                  itemCount: state.visitLog?.length ?? 0,
+                      return VisitLogRowWidget(
+                        id: item["id"],
+                        appName: item["app_name"],
+                        userName: item["user_id"],
+                        osType: item["os_type"],
+                        version: item["version"],
+                        eventType: item["event_type"],
+                        contry: item["contry"],
+                        createAt: DateTime.parse(item["created_at"]),
+                      );
+                    },
+                    separatorBuilder: (context, index) {
+                      return const Divider(
+                        height: 1,
+                        color: Colors.black,
+                      );
+                    },
+                    itemCount: state.visitLog?.length ?? 0,
+                  ),
                 ),
               ),
             ],

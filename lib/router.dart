@@ -1,16 +1,14 @@
 import 'package:go_router/go_router.dart';
 import 'package:heys_dev_web/web_screen/biz/main_biz.dart';
-import 'package:heys_dev_web/web_screen/dev/main_page.dart';
+import 'package:heys_dev_web/web_screen/tool/main_tool_screen.dart';
+
 final router = GoRouter(
-  initialLocation: "/",
+  initialLocation: '/${MainToolScreen.routeName}',
   routes: [
+    GoRoute(path: "/biz", builder: (context, state) => MainBiz()),
     GoRoute(
-        path: "/",
-        builder: (context, state) => MainPage()
-    ),
-    GoRoute(
-        path: "/biz",
-        builder: (context, state) => MainBiz()
+      path: '/${MainToolScreen.routeName}',
+      builder: (context, state) => MainToolScreen(),
     ),
   ],
 );

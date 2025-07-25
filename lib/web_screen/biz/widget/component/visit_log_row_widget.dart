@@ -36,11 +36,23 @@ class VisitLogRowWidget extends HookConsumerWidget {
           ),
 
           10.widthBox,
+          _getPlatformIcon(osType: osType),
+
+          10.widthBox,
+
           _getAppIcon(appName: appName.toString()),
+          10.widthBox,
+          contry.toString().text.make(),
           const Expanded(child: SizedBox.shrink()),
-          userName.toString().text.make(),
+          SizedBox(
+            width: 100,
+            child: userName.toString().text.ellipsis.make(),
+          ),
+
           const Expanded(child: SizedBox.shrink()),
+          50.widthBox,
           _getDateToString(dateTime: createAt),
+          10.widthBox,
         ],
       ),
     );
@@ -85,5 +97,18 @@ class VisitLogRowWidget extends HookConsumerWidget {
       text = '${(diff.inDays / 365).floor()}년 전';
 
     return text.toString().text.make();
+  }
+
+  Widget _getPlatformIcon({required String osType}) {
+    switch (osType.toLowerCase()) {
+      case "android":
+        return const Icon(Icons.android, color: Colors.green);
+      case "ios":
+        return const Icon(Icons.apple, color: Colors.black);
+      case "web":
+        return const Icon(Icons.web);
+      default:
+        return const Icon(Icons.device_unknown);
+    }
   }
 }

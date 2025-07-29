@@ -13,7 +13,9 @@ final router = GoRouter(
       routes: [
         GoRoute(
           path: JsonViewerScreen.routeName,
-          builder: (context, state) => JsonViewerScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(
+            child: JsonViewerScreen(),
+          ),
         ),
       ],
     ),

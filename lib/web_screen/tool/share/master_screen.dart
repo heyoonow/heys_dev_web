@@ -1,6 +1,6 @@
 import 'dart:js' as js;
-
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:velocity_x/velocity_x.dart';
 
@@ -8,7 +8,7 @@ import 'package:velocity_x/velocity_x.dart';
 class SideMenuItem {
   final String label;
   final IconData icon;
-  final VoidCallback? onTap;
+  final String? routeName;
   final List<SideMenuItem>? children;
   final bool initiallyExpanded;
   final bool selected;
@@ -16,7 +16,7 @@ class SideMenuItem {
   SideMenuItem({
     required this.label,
     required this.icon,
-    this.onTap,
+    this.routeName,
     this.children,
     this.initiallyExpanded = false,
     this.selected = false,
@@ -28,7 +28,7 @@ final List<SideMenuItem> sideMenuData = [
   SideMenuItem(
     label: '대시보드',
     icon: Icons.home_rounded,
-    onTap: () {}, // 대시보드 이동 (여기에 라우터 붙이면 됨)
+    routeName: '/',
     selected: true,
   ),
   SideMenuItem(
@@ -36,19 +36,23 @@ final List<SideMenuItem> sideMenuData = [
     icon: Icons.code,
     initiallyExpanded: true,
     children: [
-      SideMenuItem(label: 'JSON 뷰어', icon: Icons.bug_report, onTap: () {}),
-      // SideMenuItem(label: 'HTTP 테스트', icon: Icons.http, onTap: () {}),
-      // SideMenuItem(label: 'Diff 툴', icon: Icons.compare_arrows, onTap: () {}),
-      // SideMenuItem(label: 'CSS 뷰어', icon: Icons.format_paint, onTap: () {}),
+      SideMenuItem(
+        label: 'JSON 뷰어',
+        icon: Icons.bug_report,
+        routeName: '/json-viewer',
+      ),
+      // SideMenuItem(label: 'HTTP 테스트', icon: Icons.http, routeName: '/http-test'),
+      // SideMenuItem(label: 'Diff 툴', icon: Icons.compare_arrows, routeName: '/diff-tool'),
+      // SideMenuItem(label: 'CSS 뷰어', icon: Icons.format_paint, routeName: '/css-viewer'),
     ],
   ),
   // SideMenuItem(
   //   label: '디자인툴 모음',
   //   icon: Icons.design_services,
   //   children: [
-  //     SideMenuItem(label: '컬러 피커', icon: Icons.palette, onTap: () {}),
-  //     SideMenuItem(label: '이미지 크롭', icon: Icons.wallpaper, onTap: () {}),
-  //     SideMenuItem(label: '폰트 뷰어', icon: Icons.text_fields, onTap: () {}),
+  //     SideMenuItem(label: '컬러 피커', icon: Icons.palette, routeName: '/color-picker'),
+  //     SideMenuItem(label: '이미지 크롭', icon: Icons.wallpaper, routeName: '/image-crop'),
+  //     SideMenuItem(label: '폰트 뷰어', icon: Icons.text_fields, routeName: '/font-viewer'),
   //   ],
   // ),
 ];
@@ -62,6 +66,7 @@ class MasterScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      appBar: null, // 상단 앱바는 따로 사용하지 않음
       backgroundColor: const Color(0xFFF6F8FA),
       body: Column(
         children: [
@@ -264,44 +269,11 @@ class _SideDrawerState extends State<_SideDrawer> {
                   horizontal: 10,
                   vertical: 8,
                 ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: item.onTap,
-                  hoverColor: Colors.indigo.withOpacity(0.08),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: item.selected
-                          ? Colors.indigo[700]
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 13,
-                      horizontal: 14,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          item.icon,
-                          size: 26,
-                          color: item.selected
-                              ? Colors.white
-                              : Colors.indigo[700],
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          item.label,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: item.selected
-                                ? Colors.white
-                                : Colors.indigo[700],
-                            fontSize: 17,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                child: _DrawerMenuItem(
+                  icon: item.icon,
+                  label: item.label,
+                  routeName: item.routeName,
+                  selected: item.selected,
                 ),
               );
             }
@@ -311,8 +283,8 @@ class _SideDrawerState extends State<_SideDrawer> {
               return _DrawerMenuItem(
                 icon: item.icon,
                 label: item.label,
+                routeName: item.routeName,
                 selected: item.selected,
-                onTap: item.onTap,
               );
             }
 
@@ -337,7 +309,7 @@ class _SideDrawerState extends State<_SideDrawer> {
                     (sub) => _DrawerMenuSubItem(
                       icon: sub.icon,
                       label: sub.label,
-                      onTap: sub.onTap,
+                      routeName: sub.routeName,
                     ),
                   )
                   .toList(),
@@ -350,18 +322,18 @@ class _SideDrawerState extends State<_SideDrawer> {
   }
 }
 
-// ======== 사이드 메뉴 단일 아이템 ========
+// ======== 사이드 메뉴 단일 아이템 (context.go) ========
 class _DrawerMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String? routeName;
   final bool selected;
-  final VoidCallback? onTap;
 
   const _DrawerMenuItem({
     required this.icon,
     required this.label,
+    required this.routeName,
     required this.selected,
-    this.onTap,
   });
 
   @override
@@ -379,23 +351,26 @@ class _DrawerMenuItem extends StatelessWidget {
       selected: selected,
       selectedTileColor: Colors.indigo.withOpacity(0.09),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      onTap: onTap,
+      onTap: routeName != null
+          ? () =>
+                context.go(routeName!) // ⭐️ go_router로 페이지 이동
+          : null,
       minLeadingWidth: 28,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
     );
   }
 }
 
-// ======== 사이드 메뉴 서브 아이템 ========
+// ======== 사이드 메뉴 서브 아이템 (context.go) ========
 class _DrawerMenuSubItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback? onTap;
+  final String? routeName;
 
   const _DrawerMenuSubItem({
     required this.icon,
     required this.label,
-    this.onTap,
+    required this.routeName,
   });
 
   @override
@@ -406,7 +381,7 @@ class _DrawerMenuSubItem extends StatelessWidget {
         label,
         style: TextStyle(fontSize: 15, color: Colors.grey[800]),
       ),
-      onTap: onTap,
+      onTap: routeName != null ? () => context.go(routeName!) : null,
       minLeadingWidth: 20,
       contentPadding: const EdgeInsets.only(left: 34, right: 10),
       hoverColor: Colors.indigo.withOpacity(0.07),

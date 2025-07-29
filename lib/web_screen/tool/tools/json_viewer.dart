@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:html' as html;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:heys_dev_web/web_screen/tool/share/master_screen.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class JsonViewerScreen extends HookConsumerWidget {
@@ -12,8 +12,8 @@ class JsonViewerScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      body: JsonViewerHome(),
+    return MasterScreen(
+      child: JsonViewerHome(),
     );
   }
 }
@@ -36,6 +36,18 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
   int _currentColumn = 1;
   bool _expandAll = false;
   bool _hovered = false;
+
+  final ScrollController _treeHController = ScrollController();
+  final ScrollController _treeVController = ScrollController();
+
+  bool _showTooltip = false;
+
+  @override
+  void dispose() {
+    _treeHController.dispose();
+    _treeVController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -146,6 +158,25 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
     });
   }
 
+  Future<void> _pasteFromClipboard() async {
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      if (data != null && data.text != null && data.text!.trim().isNotEmpty) {
+        setState(() {
+          _inputController.text = data.text!;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('클립보드에 텍스트가 없습니다!')),
+        );
+      }
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('클립보드 접근 실패')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const double cardPadding = 32;
@@ -202,17 +233,43 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                       foregroundColor: Colors.white,
                                       elevation: 1,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
+                                        borderRadius: BorderRadius.circular(18),
                                       ),
                                     ),
                                     onPressed: _pickFile,
                                   ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.paste, size: 22),
+                                    label: const Text(
+                                      '클립보드 붙여넣기',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 11,
+                                      ),
+                                      backgroundColor: Colors.indigo.shade500,
+                                      foregroundColor: Colors.white,
+                                      elevation: 1,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(18),
+                                      ),
+                                    ),
+                                    onPressed: _pasteFromClipboard,
+                                  ),
                                   const SizedBox(width: 12),
-                                  Text(
-                                    '입력 (JSON)',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleSmall,
+                                  Flexible(
+                                    child: Text(
+                                      '입력 (JSON)',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleSmall,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -322,98 +379,15 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                       )
                                     : TabBarView(
                                         controller: _tabController,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
                                         children: [
                                           // ── 트리뷰 탭 ──
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.stretch,
-                                            children: [
-                                              Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                children: [
-                                                  Tooltip(
-                                                    message: "모두 펼치기",
-                                                    child: OutlinedButton(
-                                                      style: OutlinedButton.styleFrom(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                7,
-                                                              ),
-                                                        ),
-                                                        minimumSize: Size(
-                                                          34,
-                                                          34,
-                                                        ),
-                                                        padding:
-                                                            EdgeInsets.zero,
-                                                      ),
-                                                      onPressed: () => setState(
-                                                        () => _expandAll = true,
-                                                      ),
-                                                      child: Icon(
-                                                        Icons.unfold_more,
-                                                        size: 20,
-                                                        color: Colors.indigo,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 5),
-                                                  Tooltip(
-                                                    message: "모두 접기",
-                                                    child: OutlinedButton(
-                                                      style: OutlinedButton.styleFrom(
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                7,
-                                                              ),
-                                                        ),
-                                                        minimumSize: Size(
-                                                          34,
-                                                          34,
-                                                        ),
-                                                        padding:
-                                                            EdgeInsets.zero,
-                                                      ),
-                                                      onPressed: () => setState(
-                                                        () =>
-                                                            _expandAll = false,
-                                                      ),
-                                                      child: Icon(
-                                                        Icons.unfold_less,
-                                                        size: 20,
-                                                        color: Colors.indigo,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                ],
-                                              ),
-                                              Expanded(
-                                                child: Scrollbar(
-                                                  thumbVisibility: true,
-                                                  child: SingleChildScrollView(
-                                                    child: _parsed == null
-                                                        ? const Center(
-                                                            child: Text(
-                                                              '유효한 JSON을 입력하세요',
-                                                            ),
-                                                          )
-                                                        : JsonTreeView(
-                                                            _parsed,
-                                                            expandAll:
-                                                                _expandAll,
-                                                          ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                          _buildTreeWithTooltip(context),
                                           // ── 텍스트 뷰 탭 ──
                                           Scrollbar(
                                             thumbVisibility: true,
+                                            interactive: true,
                                             child: SingleChildScrollView(
                                               scrollDirection: Axis.horizontal,
                                               child: SingleChildScrollView(
@@ -435,6 +409,57 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                         ],
                                       ),
                               ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Tooltip(
+                                    message: "모두 펼치기",
+                                    child: OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            7,
+                                          ),
+                                        ),
+                                        minimumSize: Size(34, 34),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _expandAll = true,
+                                      ),
+                                      child: Icon(
+                                        Icons.unfold_more,
+                                        size: 20,
+                                        color: Colors.indigo,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Tooltip(
+                                    message: "모두 접기",
+                                    child: OutlinedButton(
+                                      style: OutlinedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            7,
+                                          ),
+                                        ),
+                                        minimumSize: Size(34, 34),
+                                        padding: EdgeInsets.zero,
+                                      ),
+                                      onPressed: () => setState(
+                                        () => _expandAll = false,
+                                      ),
+                                      child: Icon(
+                                        Icons.unfold_less,
+                                        size: 20,
+                                        color: Colors.indigo,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                              ),
                             ],
                           ),
                         ),
@@ -443,7 +468,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                   ),
                 ],
               ),
-              // Beautify 버튼 화면 중앙 플로팅
+              // Beautify 버튼
               IgnorePointer(
                 ignoring: false,
                 child: Align(
@@ -503,9 +528,93 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
       ),
     );
   }
+
+  Widget _buildTreeWithTooltip(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            // controller 반드시 둘 다! (에러 원천 차단)
+            Scrollbar(
+              controller: _treeHController,
+              thumbVisibility: true,
+              interactive: true,
+              child: SingleChildScrollView(
+                controller: _treeHController,
+                scrollDirection: Axis.horizontal,
+                child: IntrinsicWidth(
+                  child: Scrollbar(
+                    controller: _treeVController,
+                    thumbVisibility: true,
+                    interactive: true,
+                    child: SingleChildScrollView(
+                      controller: _treeVController,
+                      scrollDirection: Axis.vertical,
+                      child: JsonTreeView(
+                        _parsed,
+                        expandAll: _expandAll,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // 아래 35px에 마우스 올릴 때만 Tooltip 보여주기
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 35,
+              child: MouseRegion(
+                onEnter: (_) {
+                  if (!_showTooltip) {
+                    setState(() => _showTooltip = true);
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (mounted) setState(() => _showTooltip = false);
+                    });
+                  }
+                },
+                child: IgnorePointer(
+                  ignoring: true,
+                  child: AnimatedOpacity(
+                    opacity: _showTooltip ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Center(
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 15,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.indigo.shade400.withOpacity(0.93),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            "가로 스크롤은 Shift+휠 또는 터치패드 좌우 스와이프!",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
-// ───────── 트리 뷰/Leaf/Expandable
+// JsonTreeView, JsonExpandable, JsonLeaf 동일(패딩만 depth * 1.0)
+
 class JsonTreeView extends StatelessWidget {
   final dynamic data;
   final int depth;
@@ -535,7 +644,7 @@ class JsonTreeView extends StatelessWidget {
         children: node.entries.map((e) {
           final isComplex = e.value is Map || e.value is List;
           return Padding(
-            padding: EdgeInsets.only(left: depth * 16, top: 2, bottom: 2),
+            padding: EdgeInsets.only(left: depth * 1.0, top: 1, bottom: 1),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -548,15 +657,13 @@ class JsonTreeView extends StatelessWidget {
                 ),
                 const Text(': '),
                 if (isComplex)
-                  Expanded(
-                    child: JsonExpandable(
-                      e.value,
-                      depth: depth + 1,
-                      expandAll: expandAll,
-                    ),
+                  JsonExpandable(
+                    e.value,
+                    depth: depth + 1,
+                    expandAll: expandAll,
                   )
                 else
-                  Flexible(child: JsonLeaf(e.value)), // <-- Flexible!
+                  JsonLeaf(e.value),
               ],
             ),
           );
@@ -570,22 +677,20 @@ class JsonTreeView extends StatelessWidget {
           final v = e.value;
           final isComplex = v is Map || v is List;
           return Padding(
-            padding: EdgeInsets.only(left: depth * 16, top: 2, bottom: 2),
+            padding: EdgeInsets.only(left: depth * 1.0, top: 1, bottom: 1),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('[$idx]', style: TextStyle(color: Colors.teal)),
                 const Text(': '),
                 if (isComplex)
-                  Expanded(
-                    child: JsonExpandable(
-                      v,
-                      depth: depth + 1,
-                      expandAll: expandAll,
-                    ),
+                  JsonExpandable(
+                    v,
+                    depth: depth + 1,
+                    expandAll: expandAll,
                   )
                 else
-                  Flexible(child: JsonLeaf(v)), // <-- Flexible!
+                  JsonLeaf(v),
               ],
             ),
           );
@@ -665,7 +770,7 @@ class _JsonExpandableState extends State<JsonExpandable> {
         ),
         if (_open)
           Padding(
-            padding: const EdgeInsets.only(left: 16),
+            padding: const EdgeInsets.only(left: 1.0),
             child: JsonTreeView(
               widget.value,
               depth: widget.depth,
@@ -701,13 +806,11 @@ class JsonLeaf extends StatelessWidget {
     } else {
       text = value.toString();
     }
-    // **Flexible + overflow/softWrap 옵션!**
-    return Text(
+    return SelectableText(
       text,
       style: style,
-      softWrap: true,
-      overflow: TextOverflow.ellipsis,
-      maxLines: 3,
+      maxLines: 1,
+      enableInteractiveSelection: true,
     );
   }
 }

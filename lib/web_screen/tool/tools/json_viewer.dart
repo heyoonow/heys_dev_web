@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:html' as html;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:heys_dev_web/web_screen/tool/share/master_screen.dart';
@@ -101,7 +102,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
         _parsed = jsonDecode(_inputController.text);
       } catch (e) {
         final msg = e.toString();
-        _error = "⚠️ JSON 파싱 오류: $msg";
+        _error = "⚠️ JSON parse error: $msg";
         final reg = RegExp(r'position (\d+) \(line (\d+) column (\d+)\)');
         final match = reg.firstMatch(msg);
         if (match != null) {
@@ -137,7 +138,9 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
           : const JsonEncoder.withIndent('  ').convert(jsonVal);
       Clipboard.setData(ClipboardData(text: json));
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(minified ? 'Minified 복사!' : '포매팅 복사!')),
+        SnackBar(
+          content: Text(minified ? 'Minified copied!' : 'Pretty JSON copied!'),
+        ),
       );
     } catch (_) {}
   }
@@ -167,12 +170,12 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('클립보드에 텍스트가 없습니다!')),
+          const SnackBar(content: Text('Clipboard is empty!')),
         );
       }
     } catch (_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('클립보드 접근 실패')),
+        const SnackBar(content: Text('Failed to access clipboard')),
       );
     }
   }
@@ -196,7 +199,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
             children: [
               Row(
                 children: [
-                  // 좌측 입력
+                  // Left Input Area
                   Expanded(
                     child: Center(
                       child: Card(
@@ -219,7 +222,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                       size: 22,
                                     ),
                                     label: const Text(
-                                      'JSON 파일 열기',
+                                      'Open JSON file',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -229,7 +232,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                         horizontal: 18,
                                         vertical: 11,
                                       ),
-                                      backgroundColor: Colors.indigo.shade500,
+                                      backgroundColor: Colors.indigo,
                                       foregroundColor: Colors.white,
                                       elevation: 1,
                                       shape: RoundedRectangleBorder(
@@ -242,7 +245,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                   ElevatedButton.icon(
                                     icon: const Icon(Icons.paste, size: 22),
                                     label: const Text(
-                                      '클립보드 붙여넣기',
+                                      'Paste from clipboard',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -252,7 +255,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                         horizontal: 18,
                                         vertical: 11,
                                       ),
-                                      backgroundColor: Colors.indigo.shade500,
+                                      backgroundColor: Colors.indigo,
                                       foregroundColor: Colors.white,
                                       elevation: 1,
                                       shape: RoundedRectangleBorder(
@@ -264,7 +267,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                   const SizedBox(width: 12),
                                   Flexible(
                                     child: Text(
-                                      '입력 (JSON)',
+                                      'Input (JSON)',
                                       overflow: TextOverflow.ellipsis,
                                       style: Theme.of(
                                         context,
@@ -313,7 +316,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                       ),
                     ),
                   ),
-                  // 우측 결과
+                  // Right Result Area
                   Expanded(
                     child: Center(
                       child: Card(
@@ -332,14 +335,14 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                 children: [
                                   OutlinedButton.icon(
                                     icon: const Icon(Icons.copy, size: 20),
-                                    label: const Text('Minified 복사'),
+                                    label: const Text('Copy minified'),
                                     onPressed: () =>
                                         _copyFormatted(minified: true),
                                   ),
                                   const SizedBox(width: 8),
                                   OutlinedButton.icon(
                                     icon: const Icon(Icons.copy_all, size: 20),
-                                    label: const Text('포매팅 복사'),
+                                    label: const Text('Copy pretty JSON'),
                                     onPressed: () =>
                                         _copyFormatted(minified: false),
                                   ),
@@ -355,9 +358,12 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                   tabs: const [
                                     Tab(
                                       icon: Icon(Icons.account_tree),
-                                      text: "트리 뷰",
+                                      text: "Tree View",
                                     ),
-                                    Tab(icon: Icon(Icons.code), text: "텍스트 뷰"),
+                                    Tab(
+                                      icon: Icon(Icons.code),
+                                      text: "Text View",
+                                    ),
                                   ],
                                   indicatorColor: Colors.indigo,
                                   labelColor: Colors.indigo,
@@ -382,9 +388,9 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                         physics:
                                             const NeverScrollableScrollPhysics(),
                                         children: [
-                                          // ── 트리뷰 탭 ──
+                                          // Tree view tab
                                           _buildTreeWithTooltip(context),
-                                          // ── 텍스트 뷰 탭 ──
+                                          // Text view tab
                                           Scrollbar(
                                             thumbVisibility: true,
                                             interactive: true,
@@ -413,7 +419,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   Tooltip(
-                                    message: "모두 펼치기",
+                                    message: "Expand all",
                                     child: OutlinedButton(
                                       style: OutlinedButton.styleFrom(
                                         shape: RoundedRectangleBorder(
@@ -436,7 +442,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                                   ),
                                   const SizedBox(width: 5),
                                   Tooltip(
-                                    message: "모두 접기",
+                                    message: "Collapse all",
                                     child: OutlinedButton(
                                       style: OutlinedButton.styleFrom(
                                         shape: RoundedRectangleBorder(
@@ -468,7 +474,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                   ),
                 ],
               ),
-              // Beautify 버튼
+              // Beautify button (center)
               IgnorePointer(
                 ignoring: false,
                 child: Align(
@@ -534,7 +540,6 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
       builder: (context, constraints) {
         return Stack(
           children: [
-            // controller 반드시 둘 다! (에러 원천 차단)
             Scrollbar(
               controller: _treeHController,
               thumbVisibility: true,
@@ -559,7 +564,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                 ),
               ),
             ),
-            // 아래 35px에 마우스 올릴 때만 Tooltip 보여주기
+            // Tooltip at bottom (Shift+Wheel, etc)
             Positioned(
               left: 0,
               right: 0,
@@ -591,9 +596,9 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                             color: Colors.indigo.shade400.withOpacity(0.93),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            "가로 스크롤은 Shift+휠 또는 터치패드 좌우 스와이프!",
-                            style: const TextStyle(
+                          child: const Text(
+                            "Horizontal scroll: Shift + mouse wheel or swipe touchpad",
+                            style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
                               fontSize: 13,
@@ -613,8 +618,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
   }
 }
 
-// JsonTreeView, JsonExpandable, JsonLeaf 동일(패딩만 depth * 1.0)
-
+// ---- JSON Tree / Expandable / Leaf ----
 class JsonTreeView extends StatelessWidget {
   final dynamic data;
   final int depth;
@@ -650,7 +654,7 @@ class JsonTreeView extends StatelessWidget {
               children: [
                 Text(
                   '\"${e.key}\"',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.deepPurple,
                     fontWeight: FontWeight.bold,
                   ),
@@ -681,7 +685,7 @@ class JsonTreeView extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('[$idx]', style: TextStyle(color: Colors.teal)),
+                Text('[$idx]', style: const TextStyle(color: Colors.teal)),
                 const Text(': '),
                 if (isComplex)
                   JsonExpandable(
@@ -759,7 +763,7 @@ class _JsonExpandableState extends State<JsonExpandable> {
                 ),
                 Text(
                   isMap ? '{...} ($len)' : '[...] ($len)',
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.indigo,
                     fontWeight: FontWeight.bold,
                   ),

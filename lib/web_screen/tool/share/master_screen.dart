@@ -1,10 +1,11 @@
 import 'dart:js' as js;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:velocity_x/velocity_x.dart';
 
-// ======== 메뉴 데이터 구조 ========
+// ======== Menu Item Data Structure ========
 class SideMenuItem {
   final String label;
   final IconData icon;
@@ -23,41 +24,41 @@ class SideMenuItem {
   });
 }
 
-// ======== 사이드 메뉴 데이터 선언 ========
+// ======== Side Menu Data ========
 final List<SideMenuItem> sideMenuData = [
   SideMenuItem(
-    label: '대시보드',
+    label: 'Dashboard',
     icon: Icons.home_rounded,
     routeName: '/',
     selected: true,
   ),
   SideMenuItem(
-    label: '개발툴 모음',
+    label: 'Tools',
     icon: Icons.code,
     initiallyExpanded: true,
     children: [
       SideMenuItem(
-        label: 'JSON 뷰어',
+        label: 'JSON Viewer',
         icon: Icons.bug_report,
         routeName: '/json-viewer',
       ),
-      // SideMenuItem(label: 'HTTP 테스트', icon: Icons.http, routeName: '/http-test'),
-      // SideMenuItem(label: 'Diff 툴', icon: Icons.compare_arrows, routeName: '/diff-tool'),
-      // SideMenuItem(label: 'CSS 뷰어', icon: Icons.format_paint, routeName: '/css-viewer'),
+      // SideMenuItem(label: 'HTTP Tester', icon: Icons.http, routeName: '/http-test'),
+      // SideMenuItem(label: 'Diff Tool', icon: Icons.compare_arrows, routeName: '/diff-tool'),
+      // SideMenuItem(label: 'CSS Viewer', icon: Icons.format_paint, routeName: '/css-viewer'),
     ],
   ),
   // SideMenuItem(
-  //   label: '디자인툴 모음',
+  //   label: 'Design Tools',
   //   icon: Icons.design_services,
   //   children: [
-  //     SideMenuItem(label: '컬러 피커', icon: Icons.palette, routeName: '/color-picker'),
-  //     SideMenuItem(label: '이미지 크롭', icon: Icons.wallpaper, routeName: '/image-crop'),
-  //     SideMenuItem(label: '폰트 뷰어', icon: Icons.text_fields, routeName: '/font-viewer'),
+  //     SideMenuItem(label: 'Color Picker', icon: Icons.palette, routeName: '/color-picker'),
+  //     SideMenuItem(label: 'Image Crop', icon: Icons.wallpaper, routeName: '/image-crop'),
+  //     SideMenuItem(label: 'Font Viewer', icon: Icons.text_fields, routeName: '/font-viewer'),
   //   ],
   // ),
 ];
 
-// ======== MasterScreen 최상단 위젯 ========
+// ======== MasterScreen Root Widget ========
 class MasterScreen extends HookConsumerWidget {
   final Widget child;
 
@@ -66,7 +67,7 @@ class MasterScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: null, // 상단 앱바는 따로 사용하지 않음
+      appBar: null, // No AppBar at the top
       backgroundColor: const Color(0xFFF6F8FA),
       body: Column(
         children: [
@@ -90,7 +91,7 @@ class MasterScreen extends HookConsumerWidget {
   }
 }
 
-// ======== 상단 탑바 (브라우저 북마크 버튼 포함) ========
+// ======== TopBar with Bookmark Button ========
 class _TopBar extends StatelessWidget {
   const _TopBar({super.key});
 
@@ -128,7 +129,7 @@ class _TopBar extends StatelessWidget {
             width: 260,
             child: TextField(
               decoration: InputDecoration(
-                hintText: "검색…",
+                hintText: "Search…",
                 prefixIcon: Icon(
                   Icons.search,
                   size: 22,
@@ -157,7 +158,7 @@ class _TopBar extends StatelessWidget {
                 Icon(Icons.campaign_outlined, color: Colors.indigo, size: 20),
                 6.widthBox,
                 const Text(
-                  "Welcome, 오늘도 화이팅!",
+                  "Welcome, have a great day!",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -168,11 +169,11 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           36.widthBox,
-          // ⭐️ 브라우저 북마크 안내 버튼
+          // ⭐️ Bookmark Guide Button
           TextButton.icon(
             icon: Icon(Icons.star_border, color: Colors.amber[700]),
             label: const Text(
-              "북마크에 추가",
+              "Add to bookmarks",
               style: TextStyle(
                 color: Colors.amber,
                 fontWeight: FontWeight.w700,
@@ -189,7 +190,7 @@ class _TopBar extends StatelessWidget {
               final isMac = Theme.of(context).platform == TargetPlatform.macOS;
               final shortcut = isMac ? 'Cmd + D' : 'Ctrl + D';
 
-              // 주소 자동 복사
+              // Copy current url to clipboard
               js.context.callMethod('eval', [
                 "navigator.clipboard && navigator.clipboard.writeText(window.location.href)",
               ]);
@@ -198,19 +199,19 @@ class _TopBar extends StatelessWidget {
                 context: context,
                 builder: (_) => AlertDialog(
                   title: const Text(
-                    '브라우저 즐겨찾기 안내',
+                    'How to Bookmark',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   content: Text(
-                    "이 사이트를 브라우저 즐겨찾기에 추가하려면\n\n"
-                    "$shortcut 단축키를 눌러주세요!\n\n"
-                    "또는 주소가 자동 복사되었습니다. 원하는 곳에 붙여넣기 하세요.",
+                    "To bookmark this site, press\n\n"
+                    "$shortcut\n\n"
+                    "or the address has been copied. Paste it wherever you want.",
                     style: const TextStyle(fontSize: 15),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('확인'),
+                      child: const Text('OK'),
                     ),
                   ],
                 ),
@@ -224,7 +225,7 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-// ======== 데이터 기반 사이드 드로어 ========
+// ======== Data-driven Side Drawer ========
 class _SideDrawer extends StatefulWidget {
   const _SideDrawer({super.key});
 
@@ -261,9 +262,9 @@ class _SideDrawerState extends State<_SideDrawer> {
         children: [
           const SizedBox(height: 18),
           ...sideMenuData.map((item) {
-            // === 대시보드만 플랫/강조 ===
+            // === Dashboard only: flat & highlighted
             if ((item.children == null || item.children!.isEmpty) &&
-                item.label == '대시보드') {
+                item.label == 'Dashboard') {
               return Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
@@ -278,7 +279,7 @@ class _SideDrawerState extends State<_SideDrawer> {
               );
             }
 
-            // 그 외 일반 메뉴
+            // Other items
             if (item.children == null || item.children!.isEmpty) {
               return _DrawerMenuItem(
                 icon: item.icon,
@@ -288,7 +289,7 @@ class _SideDrawerState extends State<_SideDrawer> {
               );
             }
 
-            final isDesign = item.label.contains("디자인");
+            final isDesign = item.label.contains("Design");
             return ExpansionTile(
               leading: Icon(
                 item.icon,
@@ -322,7 +323,7 @@ class _SideDrawerState extends State<_SideDrawer> {
   }
 }
 
-// ======== 사이드 메뉴 단일 아이템 (context.go) ========
+// ======== Side Menu Single Item (context.go) ========
 class _DrawerMenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -353,7 +354,7 @@ class _DrawerMenuItem extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onTap: routeName != null
           ? () =>
-                context.go(routeName!) // ⭐️ go_router로 페이지 이동
+                context.go(routeName!) // ⭐️ Use go_router for navigation
           : null,
       minLeadingWidth: 28,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 2),
@@ -361,7 +362,7 @@ class _DrawerMenuItem extends StatelessWidget {
   }
 }
 
-// ======== 사이드 메뉴 서브 아이템 (context.go) ========
+// ======== Side Menu Sub Item (context.go) ========
 class _DrawerMenuSubItem extends StatelessWidget {
   final IconData icon;
   final String label;

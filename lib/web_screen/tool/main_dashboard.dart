@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heys_dev_web/web_screen/tool/tools/json_viewer.dart';
 
-// ───────── Tool 정보에 route 포함 (onTap은 위젯단에서 처리)
+// Tool card data model (with route for navigation)
 class ToolCardData {
   final IconData icon;
   final String label;
@@ -21,64 +21,64 @@ class ToolCardData {
   });
 }
 
-// ───────── 대시보드 메인 (카드 고정크기)
+// Dashboard main page (fixed size tool cards)
 class DashboardMainPage extends StatelessWidget {
   const DashboardMainPage({super.key});
 
   List<ToolCardData> get _tools => [
     ToolCardData(
       icon: Icons.code,
-      label: "JSON 뷰어",
-      subtitle: "JSON 포맷/뷰/검증/트리뷰",
-      category: "개발툴",
+      label: "JSON Viewer",
+      subtitle: "Format / View / Validate / Tree for JSON",
+      category: "Dev Tools",
       categoryColor: Colors.indigo,
       route: '/${JsonViewerScreen.routeName}',
     ),
     // ToolCardData(
     //   icon: Icons.http,
-    //   label: "HTTP 테스트",
-    //   subtitle: "API 응답/헤더 확인",
-    //   category: "개발툴",
+    //   label: "HTTP Tester",
+    //   subtitle: "Check API Response / Headers",
+    //   category: "Dev Tools",
     //   categoryColor: Colors.indigo,
     //   route: "/http",
     // ),
     // ToolCardData(
     //   icon: Icons.compare_arrows,
-    //   label: "Diff 툴",
-    //   subtitle: "텍스트/코드 비교",
-    //   category: "개발툴",
+    //   label: "Diff Tool",
+    //   subtitle: "Compare Text / Code",
+    //   category: "Dev Tools",
     //   categoryColor: Colors.indigo,
     //   route: "/diff",
     // ),
     // ToolCardData(
     //   icon: Icons.format_paint,
-    //   label: "CSS 뷰어",
-    //   subtitle: "스타일 구조 시각화",
-    //   category: "개발툴",
+    //   label: "CSS Viewer",
+    //   subtitle: "Visualize CSS Structure",
+    //   category: "Dev Tools",
     //   categoryColor: Colors.indigo,
     //   route: "/css",
     // ),
     // ToolCardData(
     //   icon: Icons.palette,
-    //   label: "컬러피커",
-    //   subtitle: "컬러 추출/변환",
-    //   category: "디자인툴",
+    //   label: "Color Picker",
+    //   subtitle: "Extract / Convert Colors",
+    //   category: "Design Tools",
     //   categoryColor: Colors.pink,
     //   route: "/color",
     // ),
     // ToolCardData(
     //   icon: Icons.wallpaper,
-    //   label: "이미지 크롭",
-    //   subtitle: "이미지 자르기/리사이즈",
-    //   category: "디자인툴",
+    //   label: "Image Cropper",
+    //   subtitle: "Crop / Resize Images",
+    //   category: "Design Tools",
     //   categoryColor: Colors.pink,
     //   route: "/image-crop",
     // ),
     // ToolCardData(
     //   icon: Icons.text_fields,
-    //   label: "폰트 뷰어",
-    //   subtitle: "폰트 스타일 미리보기",
-    //   category: "디자인툴",
+    //   label: "Font Viewer",
+    //   subtitle: "Preview Font Styles",
+    //   category: "Design Tools",
     //   categoryColor: Colors.pink,
     //   route: "/font",
     // ),
@@ -91,11 +91,11 @@ class DashboardMainPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 상단 정보(오늘 방문자/피드백 등)
+          // Header: Dashboard Title (Statistics card is commented for example)
           Row(
             children: [
               Text(
-                "✨ 툴 대시보드",
+                "✨ Tools Dashboard",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -103,30 +103,30 @@ class DashboardMainPage extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              // 예시용 통계카드 (주석 해제하면 됨)
+              // Example stat cards (uncomment to use)
               // _DashboardStatCard(
               //   icon: Icons.show_chart,
-              //   label: "오늘 방문자",
+              //   label: "Visitors Today",
               //   value: "132",
               //   color: Colors.green,
               // ),
               // const SizedBox(width: 14),
               // _DashboardStatCard(
               //   icon: Icons.feedback_outlined,
-              //   label: "피드백",
-              //   value: "9건",
+              //   label: "Feedback",
+              //   value: "9",
               //   color: Colors.orange,
               // ),
             ],
           ),
           const SizedBox(height: 26),
-          // 툴 카드 그리드
+          // Tool card grid
           Expanded(
             child: GridView.builder(
               itemCount: _tools.length,
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 320, // 카드 1개 가로 최대폭 320px
-                mainAxisExtent: 210, // 카드 세로높이 210px
+                maxCrossAxisExtent: 320,
+                mainAxisExtent: 210,
                 mainAxisSpacing: 18,
                 crossAxisSpacing: 18,
               ),
@@ -135,10 +135,10 @@ class DashboardMainPage extends StatelessWidget {
                 return ToolDashboardCard(
                   tool: tool,
                   onTap: () {
-                    print('툴 선택: ${tool.route}');
+                    print('Tool selected: ${tool.route}');
                     if (tool.route != null) {
-                      context.go(tool.route!); // gor_router 사용 예시
-                      // Navigator.of(context).pushNamed(tool.route!); // Navigator 사용 예시
+                      context.go(tool.route!); // Using go_router navigation
+                      // Navigator.of(context).pushNamed(tool.route!); // If using Navigator
                     }
                   },
                 );
@@ -151,7 +151,7 @@ class DashboardMainPage extends StatelessWidget {
   }
 }
 
-// ───────── 카드 위젯 (고정크기, 입체+테두리+라운드)
+// Tool card widget (fixed size, shadow + border + rounded)
 class ToolDashboardCard extends StatelessWidget {
   final ToolCardData tool;
   final VoidCallback? onTap;
@@ -164,7 +164,7 @@ class ToolDashboardCard extends StatelessWidget {
       tool.categoryColor.red,
       tool.categoryColor.green,
       tool.categoryColor.blue,
-      0.12, // (withOpacity 디프리케이트 방지)
+      0.12,
     );
 
     return Container(
@@ -198,11 +198,11 @@ class ToolDashboardCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             child: Stack(
               children: [
-                // 카드 본문
+                // Card content
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 아이콘+카테고리
+                    // Icon + category
                     CircleAvatar(
                       radius: 20,
                       backgroundColor: bgColor,
@@ -229,7 +229,7 @@ class ToolDashboardCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                // 오른쪽 아래 카테고리 뱃지
+                // Bottom right: category badge
                 Positioned(
                   right: 0,
                   bottom: 0,
@@ -261,7 +261,7 @@ class ToolDashboardCard extends StatelessWidget {
   }
 }
 
-// ───────── 상단 간단한 통계 카드(디자인은 그대로)
+// Example stat card (design unchanged, just in English)
 class _DashboardStatCard extends StatelessWidget {
   final IconData icon;
   final String label;

@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:heys_dev_web/web_screen/tool/share/master_screen.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../provider/tool/provider_tool.dart';
+
 class JsonViewerScreen extends HookConsumerWidget {
   static String routeName = "json-viewer";
 
@@ -13,6 +15,21 @@ class JsonViewerScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 예시: JSON Viewer 페이지에서 페이지 진입 시 setMetaTags 호출 (예: useEffect 또는 initState)
+    HeysTool.setMetaTags(
+      title: 'JSON Viewer & Formatter – heys.dev',
+      description:
+          'Free, fast, and easy-to-use online JSON Viewer & Formatter. Instantly validate, beautify, and visualize your JSON data in a beautiful tree view with one click. No login required!',
+
+      // 만약 별도 이미지가 있다면
+      url: 'https://heys.dev/json-viewer',
+      keywords:
+          'json viewer, json formatter, online, dev tools, heys.dev, beautify, validate, tree view',
+      siteName: 'heys.dev',
+      ogType: 'website',
+      twitterCard: 'summary_large_image',
+    );
+
     return MasterScreen(
       child: JsonViewerHome(),
     );

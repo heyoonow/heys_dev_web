@@ -16,7 +16,7 @@ class HeysTool {
     final defaultTitle = "heys.dev - The Best Developer Toolbox";
     final defaultDesc =
         "heys.dev is a free, powerful toolbox for developers and designers.";
-    final defaultImg = "https://heys.dev/your_og_image.png";
+    final defaultImg = "https://heys.dev/assets/assets/images/meta_logo.png";
     final defaultUrl = html.window.location.href;
     final defaultSiteName = "heys.dev";
     final defaultOgType = "website";

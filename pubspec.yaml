@@ -42,6 +42,7 @@ dependencies:
   supabase_flutter: ^2.9.1
   velocity_x: ^4.3.1
   universal_html: ^2.2.4
+  dart_jsonwebtoken: ^3.2.0
 
 dev_dependencies:
   flutter_test:

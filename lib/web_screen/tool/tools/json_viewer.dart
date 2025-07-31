@@ -7,6 +7,8 @@ import 'package:heys_dev_web/web_screen/tool/share/master_screen.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:velocity_x/velocity_x.dart';
 
+import '../../../common/util/utils.dart';
+
 // --- BuildContext 확장: 모바일 여부 판별 ---
 // extension MediaQueryExt on BuildContext {
 //   bool get isMobile {
@@ -27,6 +29,18 @@ class JsonViewerScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    HeysTool.setMetaTags(
+      title: 'JSON Viewer & Formatter – heys.dev',
+      description:
+          'Free, fast, and easy-to-use online JSON Viewer & Formatter. Instantly validate, beautify, and visualize your JSON data in a beautiful tree view with one click. No login required!',
+
+      url: 'https://heys.dev/json-viewer',
+      keywords:
+          'json viewer, json formatter, online, dev tools, heys.dev, beautify, validate, tree view',
+      siteName: 'heys.dev',
+      ogType: 'website',
+      twitterCard: 'summary_large_image',
+    );
     return MasterScreen(child: JsonViewerHome());
   }
 }

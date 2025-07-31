@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <!-- 메인 페이지 -->
+    <url>
+        <loc>https://heys.dev/</loc>
+        <priority>1.0</priority>
+        <changefreq>daily</changefreq>
+    </url>
+
+    <!-- 주요 툴 페이지 예시 (필요에 따라 추가/수정) -->
+    <url>
+        <loc>https://heys.dev/json-viewer</loc>
+        <priority>0.9</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+</urlset>

@@ -5,8 +5,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:heys_dev_web/web_screen/tool/share/master_screen.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:velocity_x/velocity_x.dart';
 
-import '../../../provider/tool/provider_tool.dart';
+// --- BuildContext 확장: 모바일 여부 판별 ---
+// extension MediaQueryExt on BuildContext {
+//   bool get isMobile {
+//     final userAgent = html.window.navigator.userAgent.toLowerCase();
+//     // UserAgent로 디바이스 체크
+//     return userAgent.contains('mobile') ||
+//         userAgent.contains('android') ||
+//         userAgent.contains('iphone') ||
+//         userAgent.contains('ipad') ||
+//         MediaQuery.of(this).size.width < 700;
+//   }
+// }
 
 class JsonViewerScreen extends HookConsumerWidget {
   static String routeName = "json-viewer";
@@ -15,24 +27,7 @@ class JsonViewerScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 예시: JSON Viewer 페이지에서 페이지 진입 시 setMetaTags 호출 (예: useEffect 또는 initState)
-    HeysTool.setMetaTags(
-      title: 'JSON Viewer & Formatter – heys.dev',
-      description:
-          'Free, fast, and easy-to-use online JSON Viewer & Formatter. Instantly validate, beautify, and visualize your JSON data in a beautiful tree view with one click. No login required!',
-
-      // 만약 별도 이미지가 있다면
-      url: 'https://heys.dev/json-viewer',
-      keywords:
-          'json viewer, json formatter, online, dev tools, heys.dev, beautify, validate, tree view',
-      siteName: 'heys.dev',
-      ogType: 'website',
-      twitterCard: 'summary_large_image',
-    );
-
-    return MasterScreen(
-      child: JsonViewerHome(),
-    );
+    return MasterScreen(child: JsonViewerHome());
   }
 }
 
@@ -57,13 +52,15 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
 
   final ScrollController _treeHController = ScrollController();
   final ScrollController _treeVController = ScrollController();
-
   bool _showTooltip = false;
 
   @override
   void dispose() {
     _treeHController.dispose();
     _treeVController.dispose();
+    _inputController.dispose();
+    _inputFocus.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -199,9 +196,8 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
 
   @override
   Widget build(BuildContext context) {
-    const double cardPadding = 32;
-    const double cardRadius = 18;
-
+    final isMobile = context.isMobile;
+    print('isMobile: $isMobile'); // 디버깅용
     return Scaffold(
       appBar: AppBar(
         title: const Text('JSON Viewer / Formatter'),
@@ -209,346 +205,432 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
         backgroundColor: const Color(0xFFF9F3F4),
         elevation: 0,
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              Row(
-                children: [
-                  // Left Input Area
-                  Expanded(
-                    child: Center(
-                      child: Card(
-                        margin: const EdgeInsets.all(cardPadding),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(cardRadius),
+      body: isMobile ? _buildMobile(context) : _buildDesktop(context),
+    );
+  }
+
+  Widget _buildMobile(BuildContext context) {
+    return Column(
+      children: [
+        // 입력창
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 2,
+              color: const Color(0xFFF9F3F4),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.upload_file, size: 18),
+                            label: const Text('Open'),
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(30, 40),
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: _pickFile,
+                          ),
                         ),
-                        elevation: 3,
-                        color: const Color(0xFFF9F3F4),
-                        child: Padding(
-                          padding: const EdgeInsets.all(22),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.paste, size: 18),
+                            label: const Text('Paste'),
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(30, 40),
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            onPressed: _pasteFromClipboard,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _inputController,
+                        focusNode: _inputFocus,
+                        maxLines: null,
+                        expands: true,
+                        keyboardType: TextInputType.multiline,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 14,
+                        ),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: '{ "hello": "world" }',
+                          fillColor: Colors.white,
+                          filled: true,
+                        ),
+                        onTap: _updateCursorPos,
+                        onChanged: (_) => _updateCursorPos(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        // 결과탭
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              elevation: 2,
+              color: const Color(0xFFF4E8EC),
+              child: Column(
+                children: [
+                  TabBar(
+                    controller: _tabController,
+                    tabs: const [
+                      Tab(icon: Icon(Icons.account_tree), text: "Tree"),
+                      Tab(icon: Icon(Icons.code), text: "Text"),
+                    ],
+                    indicatorColor: Colors.indigo,
+                    labelColor: Colors.indigo,
+                    unselectedLabelColor: Colors.grey,
+                  ),
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: _error != null
+                        ? Center(
+                            child: Text(
+                              _error!,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          )
+                        : TabBarView(
+                            controller: _tabController,
                             children: [
-                              Row(
-                                children: [
-                                  ElevatedButton.icon(
-                                    icon: const Icon(
-                                      Icons.upload_file,
-                                      size: 22,
-                                    ),
-                                    label: const Text(
-                                      'Open JSON file',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 18,
-                                        vertical: 11,
-                                      ),
-                                      backgroundColor: Colors.indigo,
-                                      foregroundColor: Colors.white,
-                                      elevation: 1,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                    ),
-                                    onPressed: _pickFile,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton.icon(
-                                    icon: const Icon(Icons.paste, size: 22),
-                                    label: const Text(
-                                      'Paste from clipboard',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 18,
-                                        vertical: 11,
-                                      ),
-                                      backgroundColor: Colors.indigo,
-                                      foregroundColor: Colors.white,
-                                      elevation: 1,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(18),
-                                      ),
-                                    ),
-                                    onPressed: _pasteFromClipboard,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Flexible(
-                                    child: Text(
-                                      'Input (JSON)',
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleSmall,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Expanded(
-                                child: TextField(
-                                  controller: _inputController,
-                                  focusNode: _inputFocus,
-                                  maxLines: null,
-                                  expands: true,
-                                  keyboardType: TextInputType.multiline,
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 16,
-                                  ),
-                                  decoration: const InputDecoration(
-                                    border: OutlineInputBorder(),
-                                    hintText: '{ \"hello\": \"world\" }',
-                                    fillColor: Colors.white,
-                                    filled: true,
-                                  ),
-                                  onTap: _updateCursorPos,
-                                  onChanged: (_) => _updateCursorPos(),
-                                ),
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    'Line $_currentLine, Col $_currentColumn',
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
+                              _buildTreeWithTooltip(context),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.vertical,
+                                  child: SelectableText(
+                                    _parsed == null
+                                        ? ''
+                                        : const JsonEncoder.withIndent(
+                                            '  ',
+                                          ).convert(_parsed),
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
                                       fontSize: 13,
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
                             ],
                           ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.format_align_center),
+                          label: const Text('Beautify'),
+                          onPressed: _parseAndShowError,
                         ),
                       ),
-                    ),
-                  ),
-                  // Right Result Area
-                  Expanded(
-                    child: Center(
-                      child: Card(
-                        margin: const EdgeInsets.all(cardPadding),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(cardRadius),
-                        ),
-                        elevation: 3,
-                        color: const Color(0xFFF4E8EC),
-                        child: Padding(
-                          padding: const EdgeInsets.all(22),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  OutlinedButton.icon(
-                                    icon: const Icon(Icons.copy, size: 20),
-                                    label: const Text('Copy minified'),
-                                    onPressed: () =>
-                                        _copyFormatted(minified: true),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  OutlinedButton.icon(
-                                    icon: const Icon(Icons.copy_all, size: 20),
-                                    label: const Text('Copy pretty JSON'),
-                                    onPressed: () =>
-                                        _copyFormatted(minified: false),
-                                  ),
-                                ],
-                              ),
-                              Container(
-                                margin: const EdgeInsets.only(
-                                  top: 16,
-                                  bottom: 0,
-                                ),
-                                child: TabBar(
-                                  controller: _tabController,
-                                  tabs: const [
-                                    Tab(
-                                      icon: Icon(Icons.account_tree),
-                                      text: "Tree View",
-                                    ),
-                                    Tab(
-                                      icon: Icon(Icons.code),
-                                      text: "Text View",
-                                    ),
-                                  ],
-                                  indicatorColor: Colors.indigo,
-                                  labelColor: Colors.indigo,
-                                  unselectedLabelColor: Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Expanded(
-                                child: _error != null
-                                    ? Center(
-                                        child: Text(
-                                          _error!,
-                                          style: const TextStyle(
-                                            color: Colors.red,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      )
-                                    : TabBarView(
-                                        controller: _tabController,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        children: [
-                                          // Tree view tab
-                                          _buildTreeWithTooltip(context),
-                                          // Text view tab
-                                          Scrollbar(
-                                            thumbVisibility: true,
-                                            interactive: true,
-                                            child: SingleChildScrollView(
-                                              scrollDirection: Axis.horizontal,
-                                              child: SingleChildScrollView(
-                                                scrollDirection: Axis.vertical,
-                                                child: SelectableText(
-                                                  _parsed == null
-                                                      ? ''
-                                                      : const JsonEncoder.withIndent(
-                                                          '  ',
-                                                        ).convert(_parsed),
-                                                  style: const TextStyle(
-                                                    fontFamily: 'monospace',
-                                                    fontSize: 15,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                              ),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Tooltip(
-                                    message: "Expand all",
-                                    child: OutlinedButton(
-                                      style: OutlinedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            7,
-                                          ),
-                                        ),
-                                        minimumSize: Size(34, 34),
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                      onPressed: () => setState(
-                                        () => _expandAll = true,
-                                      ),
-                                      child: Icon(
-                                        Icons.unfold_more,
-                                        size: 20,
-                                        color: Colors.indigo,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 5),
-                                  Tooltip(
-                                    message: "Collapse all",
-                                    child: OutlinedButton(
-                                      style: OutlinedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            7,
-                                          ),
-                                        ),
-                                        minimumSize: Size(34, 34),
-                                        padding: EdgeInsets.zero,
-                                      ),
-                                      onPressed: () => setState(
-                                        () => _expandAll = false,
-                                      ),
-                                      child: Icon(
-                                        Icons.unfold_less,
-                                        size: 20,
-                                        color: Colors.indigo,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                ],
-                              ),
-                            ],
-                          ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.copy),
+                          label: const Text('Copy'),
+                          onPressed: () => _copyFormatted(minified: false),
                         ),
                       ),
-                    ),
+                    ],
                   ),
+                  const SizedBox(height: 6),
                 ],
               ),
-              // Beautify button (center)
-              IgnorePointer(
-                ignoring: false,
-                child: Align(
-                  alignment: Alignment.center,
-                  child: MouseRegion(
-                    onEnter: (_) => setState(() => _hovered = true),
-                    onExit: (_) => setState(() => _hovered = false),
-                    cursor: SystemMouseCursors.click,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 120),
-                      transform: Matrix4.translationValues(
-                        0,
-                        _hovered ? -8 : 0,
-                        0,
-                      ),
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          if (_hovered)
-                            BoxShadow(
-                              color: Colors.indigo.withOpacity(0.18),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktop(BuildContext context) {
+    // 기존 PC 레이아웃 (Row - 입력/결과 패널)
+    const double cardPadding = 32;
+    const double cardRadius = 18;
+
+    return Row(
+      children: [
+        // 좌측 입력
+        Expanded(
+          child: Center(
+            child: Card(
+              margin: const EdgeInsets.all(cardPadding),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(cardRadius),
+              ),
+              elevation: 3,
+              color: const Color(0xFFF9F3F4),
+              child: Padding(
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.upload_file, size: 22),
+                          label: const Text(
+                            'Open JSON file',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 11,
                             ),
-                        ],
-                        borderRadius: BorderRadius.circular(32),
-                      ),
-                      child: FilledButton.icon(
-                        icon: const Icon(Icons.format_align_center, size: 25),
-                        label: const Text(
-                          'Beautify',
-                          style: TextStyle(fontSize: 20),
-                          softWrap: false,
-                          overflow: TextOverflow.fade,
-                        ),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(130, 64),
-                          backgroundColor: Colors.indigo,
-                          foregroundColor: Colors.white,
-                          textStyle: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                            backgroundColor: Colors.indigo,
+                            foregroundColor: Colors.white,
+                            elevation: 1,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(32),
-                          ),
-                          elevation: _hovered ? 6 : 2,
+                          onPressed: _pickFile,
                         ),
-                        onPressed: _parseAndShowError,
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.paste, size: 22),
+                          label: const Text(
+                            'Paste from clipboard',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 11,
+                            ),
+                            backgroundColor: Colors.indigo,
+                            foregroundColor: Colors.white,
+                            elevation: 1,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          onPressed: _pasteFromClipboard,
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            'Input (JSON)',
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: _inputController,
+                        focusNode: _inputFocus,
+                        maxLines: null,
+                        expands: true,
+                        keyboardType: TextInputType.multiline,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 16,
+                        ),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          hintText: '{ "hello": "world" }',
+                          fillColor: Colors.white,
+                          filled: true,
+                        ),
+                        onTap: _updateCursorPos,
+                        onChanged: (_) => _updateCursorPos(),
                       ),
                     ),
-                  ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Line $_currentLine, Col $_currentColumn',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ),
+        ),
+        // 우측 결과
+        Expanded(
+          child: Center(
+            child: Card(
+              margin: const EdgeInsets.all(cardPadding),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(cardRadius),
+              ),
+              elevation: 3,
+              color: const Color(0xFFF4E8EC),
+              child: Padding(
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.copy, size: 20),
+                          label: const Text('Copy minified'),
+                          onPressed: () => _copyFormatted(minified: true),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.copy_all, size: 20),
+                          label: const Text('Copy pretty JSON'),
+                          onPressed: () => _copyFormatted(minified: false),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(top: 16, bottom: 0),
+                      child: TabBar(
+                        controller: _tabController,
+                        tabs: const [
+                          Tab(
+                            icon: Icon(Icons.account_tree),
+                            text: "Tree View",
+                          ),
+                          Tab(icon: Icon(Icons.code), text: "Text View"),
+                        ],
+                        indicatorColor: Colors.indigo,
+                        labelColor: Colors.indigo,
+                        unselectedLabelColor: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Expanded(
+                      child: _error != null
+                          ? Center(
+                              child: Text(
+                                _error!,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            )
+                          : TabBarView(
+                              controller: _tabController,
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: [
+                                _buildTreeWithTooltip(context),
+                                Scrollbar(
+                                  thumbVisibility: true,
+                                  interactive: true,
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.vertical,
+                                      child: SelectableText(
+                                        _parsed == null
+                                            ? ''
+                                            : const JsonEncoder.withIndent(
+                                                '  ',
+                                              ).convert(_parsed),
+                                        style: const TextStyle(
+                                          fontFamily: 'monospace',
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Tooltip(
+                          message: "Expand all",
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                              minimumSize: const Size(34, 34),
+                              padding: EdgeInsets.zero,
+                            ),
+                            onPressed: () => setState(() => _expandAll = true),
+                            child: const Icon(
+                              Icons.unfold_more,
+                              size: 20,
+                              color: Colors.indigo,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Tooltip(
+                          message: "Collapse all",
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(7),
+                              ),
+                              minimumSize: const Size(34, 34),
+                              padding: EdgeInsets.zero,
+                            ),
+                            onPressed: () => setState(() => _expandAll = false),
+                            child: const Icon(
+                              Icons.unfold_less,
+                              size: 20,
+                              color: Colors.indigo,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -581,7 +663,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
                 ),
               ),
             ),
-            // Tooltip at bottom (Shift+Wheel, etc)
+            // 툴팁 (Shift+휠, 터치패드 안내)
             Positioned(
               left: 0,
               right: 0,
@@ -635,7 +717,7 @@ class _JsonViewerHomeState extends State<JsonViewerHome>
   }
 }
 
-// ---- JSON Tree / Expandable / Leaf ----
+// ---- JsonTreeView, JsonExpandable, JsonLeaf ----
 class JsonTreeView extends StatelessWidget {
   final dynamic data;
   final int depth;
@@ -705,11 +787,7 @@ class JsonTreeView extends StatelessWidget {
                 Text('[$idx]', style: const TextStyle(color: Colors.teal)),
                 const Text(': '),
                 if (isComplex)
-                  JsonExpandable(
-                    v,
-                    depth: depth + 1,
-                    expandAll: expandAll,
-                  )
+                  JsonExpandable(v, depth: depth + 1, expandAll: expandAll)
                 else
                   JsonLeaf(v),
               ],
@@ -752,9 +830,7 @@ class _JsonExpandableState extends State<JsonExpandable> {
   void didUpdateWidget(covariant JsonExpandable oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.expandAll != oldWidget.expandAll) {
-      setState(() {
-        _open = widget.expandAll;
-      });
+      setState(() => _open = widget.expandAll);
     }
   }
 

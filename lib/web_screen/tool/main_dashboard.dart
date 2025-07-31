@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:heys_dev_web/web_screen/tool/tools/json_viewer.dart';
+import 'package:heys_dev_web/provider/tool/tool_service.dart';
 
 // Tool card data model (with route for navigation)
 class ToolCardData {
@@ -25,64 +25,7 @@ class ToolCardData {
 class DashboardMainPage extends StatelessWidget {
   const DashboardMainPage({super.key});
 
-  List<ToolCardData> get _tools => [
-    ToolCardData(
-      icon: Icons.code,
-      label: "JSON Viewer",
-      subtitle: "Format / View / Validate / Tree for JSON",
-      category: "Dev Tools",
-      categoryColor: Colors.indigo,
-      route: '/${JsonViewerScreen.routeName}',
-    ),
-    // ToolCardData(
-    //   icon: Icons.http,
-    //   label: "HTTP Tester",
-    //   subtitle: "Check API Response / Headers",
-    //   category: "Dev Tools",
-    //   categoryColor: Colors.indigo,
-    //   route: "/http",
-    // ),
-    // ToolCardData(
-    //   icon: Icons.compare_arrows,
-    //   label: "Diff Tool",
-    //   subtitle: "Compare Text / Code",
-    //   category: "Dev Tools",
-    //   categoryColor: Colors.indigo,
-    //   route: "/diff",
-    // ),
-    // ToolCardData(
-    //   icon: Icons.format_paint,
-    //   label: "CSS Viewer",
-    //   subtitle: "Visualize CSS Structure",
-    //   category: "Dev Tools",
-    //   categoryColor: Colors.indigo,
-    //   route: "/css",
-    // ),
-    // ToolCardData(
-    //   icon: Icons.palette,
-    //   label: "Color Picker",
-    //   subtitle: "Extract / Convert Colors",
-    //   category: "Design Tools",
-    //   categoryColor: Colors.pink,
-    //   route: "/color",
-    // ),
-    // ToolCardData(
-    //   icon: Icons.wallpaper,
-    //   label: "Image Cropper",
-    //   subtitle: "Crop / Resize Images",
-    //   category: "Design Tools",
-    //   categoryColor: Colors.pink,
-    //   route: "/image-crop",
-    // ),
-    // ToolCardData(
-    //   icon: Icons.text_fields,
-    //   label: "Font Viewer",
-    //   subtitle: "Preview Font Styles",
-    //   category: "Design Tools",
-    //   categoryColor: Colors.pink,
-    //   route: "/font",
-    // ),
-  ];
+  List<ToolCardData> get _tools => ToolService.getToolCards();
 
   @override
   Widget build(BuildContext context) {

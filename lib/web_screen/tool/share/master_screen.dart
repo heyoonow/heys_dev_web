@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:velocity_x/velocity_x.dart';
 
+import '../../../provider/tool/tool_service.dart';
+
 // ======== Menu Item Data Structure ========
 class SideMenuItem {
   final String label;
@@ -36,16 +38,7 @@ final List<SideMenuItem> sideMenuData = [
     label: 'Tools',
     icon: Icons.code,
     initiallyExpanded: true,
-    children: [
-      SideMenuItem(
-        label: 'JSON Viewer',
-        icon: Icons.bug_report,
-        routeName: '/json-viewer',
-      ),
-      // SideMenuItem(label: 'HTTP Tester', icon: Icons.http, routeName: '/http-test'),
-      // SideMenuItem(label: 'Diff Tool', icon: Icons.compare_arrows, routeName: '/diff-tool'),
-      // SideMenuItem(label: 'CSS Viewer', icon: Icons.format_paint, routeName: '/css-viewer'),
-    ],
+    children: ToolService.getSideItems(),
   ),
   // SideMenuItem(
   //   label: 'Design Tools',
@@ -124,9 +117,9 @@ class _TopBar extends StatelessWidget {
               letterSpacing: -1,
             ),
           ),
-          36.widthBox,
+          if (!context.isMobile) 36.widthBox, 10.widthBox,
           SizedBox(
-            width: 260,
+            width: 200,
             child: TextField(
               decoration: InputDecoration(
                 hintText: "Search…",
@@ -147,78 +140,84 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           36.widthBox,
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.indigo.shade50,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.campaign_outlined, color: Colors.indigo, size: 20),
-                6.widthBox,
-                const Text(
-                  "Welcome, have a great day!",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.indigo,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          36.widthBox,
-          // ⭐️ Bookmark Guide Button
-          TextButton.icon(
-            icon: Icon(Icons.star_border, color: Colors.amber[700]),
-            label: const Text(
-              "Add to bookmarks",
-              style: TextStyle(
-                color: Colors.amber,
-                fontWeight: FontWeight.w700,
+          if (!context.isMobile)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.indigo.shade50,
+                borderRadius: BorderRadius.circular(16),
               ),
-            ),
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.amber[50],
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            onPressed: () {
-              final isMac = Theme.of(context).platform == TargetPlatform.macOS;
-              final shortcut = isMac ? 'Cmd + D' : 'Ctrl + D';
-
-              // Copy current url to clipboard
-              js.context.callMethod('eval', [
-                "navigator.clipboard && navigator.clipboard.writeText(window.location.href)",
-              ]);
-
-              showDialog(
-                context: context,
-                builder: (_) => AlertDialog(
-                  title: const Text(
-                    'How to Bookmark',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  content: Text(
-                    "To bookmark this site, press\n\n"
-                    "$shortcut\n\n"
-                    "or the address has been copied. Paste it wherever you want.",
-                    style: const TextStyle(fontSize: 15),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('OK'),
+              child: Row(
+                children: [
+                  Icon(Icons.campaign_outlined, color: Colors.indigo, size: 20),
+                  6.widthBox,
+                  const Text(
+                    "Welcome, have a great day!",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.indigo,
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+          if (!context.isMobile) 36.widthBox,
+          // ⭐️ Bookmark Guide Button
+          if (!context.isMobile)
+            TextButton.icon(
+              icon: Icon(Icons.star_border, color: Colors.amber[700]),
+              label: const Text(
+                "Add to bookmarks",
+                style: TextStyle(
+                  color: Colors.amber,
+                  fontWeight: FontWeight.w700,
                 ),
-              );
-            },
-          ),
-          const Spacer(),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.amber[50],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: () {
+                final isMac =
+                    Theme.of(context).platform == TargetPlatform.macOS;
+                final shortcut = isMac ? 'Cmd + D' : 'Ctrl + D';
+
+                // Copy current url to clipboard
+                js.context.callMethod('eval', [
+                  "navigator.clipboard && navigator.clipboard.writeText(window.location.href)",
+                ]);
+
+                showDialog(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text(
+                      'How to Bookmark',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    content: Text(
+                      "To bookmark this site, press\n\n"
+                      "$shortcut\n\n"
+                      "or the address has been copied. Paste it wherever you want.",
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('OK'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          if (!context.isMobile) const Spacer(),
         ],
       ),
     );
@@ -248,7 +247,7 @@ class _SideDrawerState extends State<_SideDrawer> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 200,
+      width: context.isMobile ? 0 : 200,
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(

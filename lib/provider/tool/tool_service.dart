@@ -3,6 +3,7 @@ import 'package:heys_dev_web/web_screen/tool/tools/json_viewer.dart';
 
 import '../../web_screen/tool/main_dashboard.dart';
 import '../../web_screen/tool/share/master_screen.dart';
+import '../../web_screen/tool/tools/diff_page.dart';
 import '../../web_screen/tool/tools/jwt_viewer.dart';
 
 class ToolService {
@@ -13,7 +14,7 @@ class ToolService {
       title: "JSON Viewer",
       description: "Format / View / Validate / Tree for JSON",
       category: "Dev Tools",
-      categoryColor: Colors.indigo,
+      categoryColor: Colors.green,
       route: '/${JsonViewerScreen.routeName}',
       iconData: Icons.code,
     ),
@@ -25,6 +26,16 @@ class ToolService {
       categoryColor: Colors.indigo,
       route: '/${JwtViewerScreen.routeName}',
       iconData: Icons.verified_user, // 또는 적당한 JWT 아이콘 사용
+    ),
+    ServiceMoel(
+      title: "Diff Checker",
+      description:
+          "Compare two texts or code snippets side by side. Instantly highlight and visualize line differences with color-coded results.",
+      category: "Dev Tools",
+      categoryColor: Colors.teal,
+      // 카테고리 컬러(원하는 색상으로)
+      route: '/${DiffCheckerPage.routeName}',
+      iconData: Icons.compare, // Diff에 어울리는 아이콘
     ),
 
     // ServiceMoel(

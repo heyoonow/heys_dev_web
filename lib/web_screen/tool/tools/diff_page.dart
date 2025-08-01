@@ -74,8 +74,8 @@ class _DiffCheckerHomeState extends State<DiffCheckerHome> {
         }
         diffIndexes.add(i);
       }
-      leftDiffs.add(_LineDiff(line: l, type: ltype, index: i));
-      rightDiffs.add(_LineDiff(line: r, type: rtype, index: i));
+      leftDiffs.add(_LineDiff(line: l, type: ltype, index: i, compareLine: r));
+      rightDiffs.add(_LineDiff(line: r, type: rtype, index: i, compareLine: l));
     }
     setState(() {
       _leftLines = leftDiffs;
@@ -264,8 +264,14 @@ class _LineDiff {
   final String line;
   final DiffType type;
   final int index;
+  final String? compareLine; // for character diff
 
-  _LineDiff({required this.line, required this.type, required this.index});
+  _LineDiff({
+    required this.line,
+    required this.type,
+    required this.index,
+    this.compareLine,
+  });
 }
 
 class DiffCodeBox extends StatelessWidget {
@@ -304,6 +310,53 @@ class DiffCodeBox extends StatelessWidget {
       default:
         return null;
     }
+  }
+
+  // 문자 단위 diff: side에 따라 색상 다르게
+  List<InlineSpan> _inlineDiffHighlight(
+    String me,
+    String other,
+    DiffSide side,
+  ) {
+    final aRunes = me.runes.toList();
+    final bRunes = other.runes.toList();
+    final minLen = aRunes.length < bRunes.length
+        ? aRunes.length
+        : bRunes.length;
+    List<InlineSpan> spans = [];
+    for (int i = 0; i < minLen; i++) {
+      if (aRunes[i] != bRunes[i]) {
+        spans.add(
+          TextSpan(
+            text: String.fromCharCode(aRunes[i]),
+            style: TextStyle(
+              backgroundColor: side == DiffSide.left
+                  ? const Color(0xFF4287f5)
+                  : const Color(0xFFFFA726),
+              color: side == DiffSide.left ? Colors.white : Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        );
+      } else {
+        spans.add(TextSpan(text: String.fromCharCode(aRunes[i])));
+      }
+    }
+    for (int i = minLen; i < aRunes.length; i++) {
+      spans.add(
+        TextSpan(
+          text: String.fromCharCode(aRunes[i]),
+          style: TextStyle(
+            backgroundColor: side == DiffSide.left
+                ? const Color(0xFF4287f5)
+                : const Color(0xFFFFA726),
+            color: side == DiffSide.left ? Colors.white : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+    return spans;
   }
 
   @override
@@ -354,16 +407,39 @@ class DiffCodeBox extends StatelessWidget {
                         ),
                         const SizedBox(width: 5),
                         Expanded(
-                          child: SelectableText(
-                            line.line,
-                            style: TextStyle(
-                              fontFamily: "FiraMono",
-                              fontSize: 13.5,
-                              color:
-                                  _textForType(line.type) ??
-                                  Theme.of(context).textTheme.bodyLarge?.color,
-                            ),
-                          ),
+                          child:
+                              (line.type == DiffType.modify &&
+                                  line.compareLine != null)
+                              ? RichText(
+                                  text: TextSpan(
+                                    children: _inlineDiffHighlight(
+                                      line.line,
+                                      line.compareLine ?? "",
+                                      side,
+                                    ),
+                                    style: TextStyle(
+                                      fontFamily: "FiraMono",
+                                      fontSize: 13.5,
+                                      color:
+                                          _textForType(line.type) ??
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyLarge?.color,
+                                    ),
+                                  ),
+                                )
+                              : SelectableText(
+                                  line.line,
+                                  style: TextStyle(
+                                    fontFamily: "FiraMono",
+                                    fontSize: 13.5,
+                                    color:
+                                        _textForType(line.type) ??
+                                        Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge?.color,
+                                  ),
+                                ),
                         ),
                       ],
                     ),

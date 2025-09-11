@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:velocity_x/velocity_x.dart';
 
@@ -34,24 +36,28 @@ class VisitLogRowWidget extends HookConsumerWidget {
             width: 60,
             child: id.toString().text.make().centered(),
           ),
-
           10.widthBox,
           _getPlatformIcon(osType: osType),
-
           10.widthBox,
-
           _getAppIcon(appName: appName.toString()),
           10.widthBox,
-          contry.toString().text.make(),
-          const Expanded(child: SizedBox.shrink()),
-          SizedBox(
-            width: 100,
-            child: userName.toString().text.ellipsis.make(),
+          SizedBox(width: 100, child: contry.toString().text.make()),
+          20.widthBox,
+          Expanded(
+            child: TextButton(
+              onPressed: () {
+                context.go('/biz/detail/$userName');
+              },
+              child: userName.toString().text.ellipsis.make(),
+            ),
           ),
-
-          const Expanded(child: SizedBox.shrink()),
           50.widthBox,
           _getDateToString(dateTime: createAt),
+          10.widthBox,
+          SizedBox(
+            width: 120,
+            child: _getDateToStringFormat(now: createAt).text.make().centered(),
+          ),
           10.widthBox,
         ],
       ),
@@ -67,8 +73,11 @@ class VisitLogRowWidget extends HookConsumerWidget {
       case "stopwatch":
         iconData = Icons.watch_later_outlined;
         break;
+      case "hdeys.dev":
+        iconData = CupertinoIcons.tag;
+        break;
       default:
-        iconData = Icons.place;
+        iconData = CupertinoIcons.nosign;
         break;
     }
     return Icon(iconData);
@@ -110,5 +119,15 @@ class VisitLogRowWidget extends HookConsumerWidget {
       default:
         return const Icon(Icons.device_unknown);
     }
+  }
+
+  String _getDateToStringFormat({required DateTime now}) {
+    now = now.toLocal();
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+
+    String formatted =
+        '${twoDigits(now.hour)}:${twoDigits(now.minute)}:${twoDigits(now.second)}';
+
+    return formatted;
   }
 }

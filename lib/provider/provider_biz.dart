@@ -64,4 +64,20 @@ class BizService extends StateNotifier<BizModel> {
         .limit(20);
     state = state.copyWith(visitLog: response.toList());
   }
+
+  Future<void> detailLog({required String id}) async {
+    final response = await client.from(visit_log).select().eq("user_id", id);
+    final count = response.length;
+    final visit =
+        state.visitLog?.map((item) {
+          if (item["user_id"] == id) {
+            item["count"] = count;
+          } else {
+            item["count"] = 0;
+          }
+          return item;
+        }).toList() ??
+        [];
+    state = state.copyWith(detailLog: visit);
+  }
 }

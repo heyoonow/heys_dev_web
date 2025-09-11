@@ -16,7 +16,7 @@ class BizMain extends HookConsumerWidget {
     return Scaffold(
       body: Container(
         child: SizedBox(
-          width: MediaQuery.of(context).size.width / 2,
+          width: MediaQuery.of(context).size.width / 4 * 3,
           child: Column(
             children: [
               VisitLogSearch(),

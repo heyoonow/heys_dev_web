@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:heys_dev_web/web_screen/biz/detail.dart';
 import 'package:heys_dev_web/web_screen/biz/main_biz.dart';
 import 'package:heys_dev_web/web_screen/tool/main_tool_screen.dart';
 import 'package:heys_dev_web/web_screen/tool/tools/diff_page.dart';
@@ -8,7 +9,23 @@ import 'package:heys_dev_web/web_screen/tool/tools/jwt_viewer.dart';
 final router = GoRouter(
   initialLocation: '/${MainToolScreen.routeName}',
   routes: [
-    GoRoute(path: "/biz", builder: (context, state) => MainBiz()),
+    GoRoute(
+      path: "/biz",
+      builder: (context, state) => MainBiz(),
+      routes: [
+        GoRoute(
+          path: '${Detail.routeName}/:id',
+          pageBuilder: (context, state) {
+            final id = state.pathParameters['id'] ?? '';
+            return NoTransitionPage(
+              child: Detail(
+                id: id,
+              ),
+            );
+          },
+        ),
+      ],
+    ),
     GoRoute(
       path: '/${MainToolScreen.routeName}',
       builder: (context, state) => MainToolScreen(),

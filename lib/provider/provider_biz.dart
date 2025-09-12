@@ -66,7 +66,11 @@ class BizService extends StateNotifier<BizModel> {
   }
 
   Future<void> detailLog({required String id}) async {
-    final response = await client.from(visit_log).select().eq("user_id", id);
+    final response = await client
+        .from(visit_log)
+        .select()
+        .eq("user_id", id)
+        .order('created_at', ascending: false);
     final count = response.length;
     final visit =
         state.visitLog?.map((item) {
@@ -78,6 +82,6 @@ class BizService extends StateNotifier<BizModel> {
           return item;
         }).toList() ??
         [];
-    state = state.copyWith(detailLog: visit);
+    state = state.copyWith(detailLog: response.toList());
   }
 }

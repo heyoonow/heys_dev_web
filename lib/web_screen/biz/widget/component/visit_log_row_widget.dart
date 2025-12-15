@@ -13,6 +13,7 @@ class VisitLogRowWidget extends HookConsumerWidget {
   final String eventType;
   final String contry;
   final DateTime createAt;
+  final int count;
 
   const VisitLogRowWidget({
     required this.id,
@@ -23,6 +24,7 @@ class VisitLogRowWidget extends HookConsumerWidget {
     required this.eventType,
     required this.contry,
     required this.createAt,
+    required this.count,
     super.key,
   });
 
@@ -52,7 +54,9 @@ class VisitLogRowWidget extends HookConsumerWidget {
             ),
           ),
           50.widthBox,
-          _getDateToString(dateTime: createAt),
+          count.toString().text.make(),
+          30.widthBox,
+          SizedBox(width: 80, child: _getDateToString(dateTime: createAt)),
           10.widthBox,
           SizedBox(
             width: 120,
@@ -125,8 +129,7 @@ class VisitLogRowWidget extends HookConsumerWidget {
     now = now.toLocal();
     String twoDigits(int n) => n.toString().padLeft(2, '0');
 
-    String formatted =
-        '${twoDigits(now.hour)}:${twoDigits(now.minute)}:${twoDigits(now.second)}';
+    String formatted = '${twoDigits(now.hour)}:${twoDigits(now.minute)}:${twoDigits(now.second)}';
 
     return formatted;
   }

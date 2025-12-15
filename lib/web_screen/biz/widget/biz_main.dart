@@ -41,6 +41,7 @@ class BizMain extends HookConsumerWidget {
                         eventType: item["event_type"],
                         contry: item["contry"],
                         createAt: DateTime.parse(item["created_at"]),
+                        count: item["count"],
                       );
                     },
                     separatorBuilder: (context, index) {
